@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telefe Live Stream</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <div id="app">
+    <div class="sidebar">
+      <h2>Canales</h2>
+      <ul id="channel-list">
+        <!-- Channels will be injected here -->
+      </ul>
+    </div>
+    <div class="video-container">
+      <video id="video" controls autoplay muted></video>
+      <div class="overlay">
+        <h1 id="channel-name">Telefe Live</h1>
+        <div class="status-badge">LIVE</div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/main.js"></script>
+</body>
+
+</html>
