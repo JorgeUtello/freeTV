@@ -64,6 +64,16 @@ export default async function handler(req, res) {
         if (upstream.endsWith('.ts')) {
             console.log('[PROXY SEGMENTO] Status:', resp.status);
             console.log('[PROXY SEGMENTO] Headers:', Object.fromEntries(resp.headers.entries()));
+            // Leer el buffer para mostrar el tamaño
+            const buffer = await resp.arrayBuffer();
+            console.log('[PROXY SEGMENTO] Tamaño:', buffer.byteLength, 'bytes');
+            const upstreamType = resp.headers.get('content-type');
+            if (upstreamType) res.setHeader('Content-Type', upstreamType);
+            const upstreamCache = resp.headers.get('cache-control');
+            if (upstreamCache) res.setHeader('Cache-Control', upstreamCache);
+            const contentLength = resp.headers.get('content-length');
+            if (contentLength) res.setHeader('Content-Length', contentLength);
+            return res.send(Buffer.from(buffer));
         }
         const upstreamType = resp.headers.get('content-type');
         if (upstreamType) res.setHeader('Content-Type', upstreamType);
