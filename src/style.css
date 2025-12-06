@@ -52,7 +52,10 @@ h1 {
   padding: 24px 0 24px 0;
   box-sizing: border-box;
   overflow-y: auto;
-  position: relative;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
   z-index: 2;
   border-top-right-radius: 16px;
   border-bottom-right-radius: 16px;
@@ -62,7 +65,10 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  position: absolute;
+  left: 240px;
+  top: 0;
+  width: calc(100vw - 240px);
   background: #222;
   width: 900px;
   max-width: 90vw;
