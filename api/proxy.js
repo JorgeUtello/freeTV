@@ -13,15 +13,29 @@ export default async function handler(req, res) {
     try { upstream = decodeURIComponent(encoded); } catch (e) { return res.status(400).json({ error: 'invalid url encoding' }); }
 
     try {
-        const resp = await fetch(upstream, { redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!resp.ok) throw new Error(`Upstream HTTP ${resp.status}`);
+        // Forward some client headers (Range, Accept) to upstream to support partial requests
+        const forwardHeaders = {};
+        const maybeForward = ['range', 'accept', 'user-agent', 'referer', 'origin', 'accept-encoding'];
+        maybeForward.forEach(h => {
+            if (req.headers[h]) forwardHeaders[h] = req.headers[h];
+        });
 
-        const contentType = resp.headers.get('content-type') || '';
+        const resp = await fetch(upstream, { redirect: 'follow', headers: forwardHeaders });
+        if (!resp.ok) {
+            // Return upstream status and message for easier debugging
+            const text = await resp.text().catch(() => '');
+            console.error('Proxy upstream error', resp.status, upstream);
+            res.status(502).json({ error: 'Upstream error', status: resp.status, body: text });
+            return;
+        }
 
-        if (contentType.includes('mpegurl') || (await resp.clone().text()).includes('#EXTM3U')) {
+        const contentType = (resp.headers.get('content-type') || '').toLowerCase();
+
+        // If playlist, rewrite URIs to proxy again so nested playlists/segments are proxied
+        if (contentType.includes('mpegurl') || contentType.includes('application/vnd.apple.mpegurl')) {
             const body = await resp.text();
             const base = resp.url;
-            const proto = req.headers['x-forwarded-proto'] || 'https';
+            const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
             const host = req.headers['x-forwarded-host'] || req.headers.host;
             const lines = body.split(/\r?\n/);
             const rewritten = lines.map(line => {
@@ -34,13 +48,27 @@ export default async function handler(req, res) {
             return res.send(rewritten);
         }
 
-        // Binary/text content: stream as buffer
-        const buffer = await resp.arrayBuffer();
+        // For binary segments (e.g. .ts) stream the response directly to client to avoid buffering
+        // Prefer piping if available (node-fetch may expose a node stream)
         const upstreamType = resp.headers.get('content-type');
         if (upstreamType) res.setHeader('Content-Type', upstreamType);
+        // Forward cache and content-length headers when present
+        const upstreamCache = resp.headers.get('cache-control');
+        if (upstreamCache) res.setHeader('Cache-Control', upstreamCache);
+        const contentLength = resp.headers.get('content-length');
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+
+        if (resp.body && typeof resp.body.pipe === 'function') {
+            // node stream
+            resp.body.pipe(res);
+            return;
+        }
+
+        // Fallback: read as arrayBuffer and send
+        const buffer = await resp.arrayBuffer();
         return res.send(Buffer.from(buffer));
     } catch (err) {
-        console.error('Proxy error:', err.message, upstream);
-        return res.status(502).json({ error: 'Proxy failed', details: err.message });
+        console.error('Proxy error:', err && err.message, upstream);
+        return res.status(502).json({ error: 'Proxy failed', details: err && err.message });
     }
 }
