@@ -12,12 +12,12 @@ export default async function handler(req, res) {
     const { channel } = req.query;
     if (!channel) return res.status(400).json({ error: 'Canal no especificado' });
 
-    // Map channels to endpoints (prefer API endpoints that redirect to signed m3u8)
+    // Map channels to endpoints from the new playlist source
     const CHANNEL_URLS = {
-        telefe: 'https://mitelefe.com/Api/Videos/GetSourceUrl/694564/0/HLS?',
-    america: 'http://190.104.67.180:234/play/a09a/index.m3u8',
-        eltrece: 'https://livetrx01.vodgc.net/eltrecetv/index.m3u8',
-        espn: 'http://190.104.67.180:234/play/a09a/index.m3u8'
+        america: 'http://190.104.67.180:234/play/a09a/index.m3u8',
+        telefe: 'http://190.104.67.180:234/play/a09b/index.m3u8',
+        eltrece: 'http://190.104.67.180:234/play/a09c/index.m3u8',
+        espn: 'http://190.104.67.180:234/play/a09d/index.m3u8'
     };
 
     const source = CHANNEL_URLS[channel];

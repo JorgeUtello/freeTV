@@ -9,14 +9,7 @@ export default function handler(req, res) {
     { id: 'america', name: 'America', proxy: true },
     { id: 'telefe', name: 'Telefe', proxy: true },
     { id: 'eltrece', name: 'El Trece', proxy: true },
-  { id: 'espn', name: 'ESPN', proxy: true },
-    // Example of an embedded YouTube channel (iframe)
-    {
-      id: 'youtube_cb12KmMMDJA',
-      name: 'TN',
-      embed: true,
-      iframeUrl: 'https://www.youtube.com/embed/cb12KmMMDJA?si=TNIUnj3XPT9Owxm1'
-    }
+    { id: 'espn', name: 'ESPN', proxy: true }
   ];
 
   res.json({ channels });
