@@ -66,13 +66,13 @@ export default async function handler(req, res) {
         const contentLength = resp.headers.get('content-length');
         if (contentLength) res.setHeader('Content-Length', contentLength);
 
+        // Prefer piping if available (node-fetch may expose a node stream)
         if (resp.body && typeof resp.body.pipe === 'function') {
-            // node stream
             resp.body.pipe(res);
             return;
         }
 
-        // Fallback: read as arrayBuffer and send
+        // Fallback: read as arrayBuffer and send (only once)
         const buffer = await resp.arrayBuffer();
         return res.send(Buffer.from(buffer));
     } catch (err) {

@@ -16,7 +16,7 @@ app.use(express.static(__dirname));
 const CHANNEL_URLS = {
     // Use the Telefe API endpoint which redirects to a fresh signed m3u8 URL
     telefe: 'https://mitelefe.com/Api/Videos/GetSourceUrl/694564/0/HLS?',
-    america: 'https://raw.githubusercontent.com/MachineSystems/archived_m3u8/main/america_hls.m3u8',
+    america: 'http://190.104.67.180:234/play/a094/index.m3u8',
     eltrece: 'https://livetrx01.vodgc.net/eltrecetv/index.m3u8'
 };
 
