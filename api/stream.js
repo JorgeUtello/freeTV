@@ -15,8 +15,9 @@ export default async function handler(req, res) {
     // Map channels to endpoints (prefer API endpoints that redirect to signed m3u8)
     const CHANNEL_URLS = {
         telefe: 'https://mitelefe.com/Api/Videos/GetSourceUrl/694564/0/HLS?',
-        america: 'http://190.104.67.180:234/play/a094/index.m3u8',
-        eltrece: 'https://livetrx01.vodgc.net/eltrecetv/index.m3u8'
+    america: 'http://190.104.67.180:234/play/a09a/index.m3u8',
+        eltrece: 'https://livetrx01.vodgc.net/eltrecetv/index.m3u8',
+        espn: 'http://190.104.67.180:234/play/a09a/index.m3u8'
     };
 
     const source = CHANNEL_URLS[channel];

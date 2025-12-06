@@ -13,6 +13,7 @@ let channels = [
     { id: 'america', name: 'America', url: `${API_BASE}/stream?channel=america`, isProxy: true },
     { id: 'telefe', name: 'Telefe', url: `${API_BASE}/stream?channel=telefe`, isProxy: true },
     { id: 'eltrece', name: 'El Trece', url: `${API_BASE}/stream?channel=eltrece`, isProxy: true },
+    { id: 'espn', name: 'ESPN', url: `${API_BASE}/stream?channel=espn`, isProxy: true },
     // local-only fallback for a YouTube embed (iframe)
     { id: 'youtube_cb12KmMMDJA', name: 'TN', embed: true, iframeUrl: 'https://www.youtube.com/embed/cb12KmMMDJA?si=TNIUnj3XPT9Owxm1' }
 ];
