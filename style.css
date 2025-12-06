@@ -79,6 +79,7 @@ body {
 }
 
 .video-container {
+  max-height: 80vh;
   flex: 1;
   position: relative;
   width: 100%;
