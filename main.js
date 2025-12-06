@@ -14,7 +14,7 @@ let channels = [
     { id: 'telefe', name: 'Telefe', url: `${API_BASE}/stream?channel=telefe`, isProxy: true },
     { id: 'eltrece', name: 'El Trece', url: `${API_BASE}/stream?channel=eltrece`, isProxy: true },
     // local-only fallback for a YouTube embed (iframe)
-    { id: 'youtube_cb12KmMMDJA', name: 'YouTube - Especial', embed: true, iframeUrl: 'https://www.youtube.com/embed/cb12KmMMDJA?si=TNIUnj3XPT9Owxm1' }
+    { id: 'youtube_cb12KmMMDJA', name: 'TN', embed: true, iframeUrl: 'https://www.youtube.com/embed/cb12KmMMDJA?si=TNIUnj3XPT9Owxm1' }
 ];
 
 // Try to fetch channels list from serverless API in production
