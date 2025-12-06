@@ -30,11 +30,19 @@ export default async function handler(req, res) {
             if (req.headers[h]) forwardHeaders[h] = req.headers[h];
         });
 
+        // Debug mode: return upstream statuses/headers/body snippets to help diagnose 502s
+        const debug = req.query.debug === '1' || req.query.debug === 'true';
+
         // First request without following redirects to capture Location to signed CDN
         const initial = await fetch(source, { redirect: 'manual', headers: { ...forwardHeaders, 'User-Agent': forwardHeaders['user-agent'] || 'Mozilla/5.0' } });
         if (initial.status >= 300 && initial.status < 400) {
             const loc = initial.headers.get('location');
             if (loc) {
+                if (debug) {
+                    const initialHeaders = {};
+                    initial.headers.forEach((v, k) => initialHeaders[k] = v);
+                    return res.json({ debug: true, stage: 'initial-redirect', status: initial.status, location: loc, initialHeaders });
+                }
                 // Return redirect to client so browser can request signed URL directly
                 return res.redirect(loc);
             }
@@ -45,6 +53,11 @@ export default async function handler(req, res) {
         if (!resp.ok) {
             const text = await resp.text().catch(() => '');
             console.error('[API Error] stream upstream:', resp.status, source, text.slice(0, 300));
+            if (debug) {
+                const respHeaders = {};
+                resp.headers.forEach((v, k) => respHeaders[k] = v);
+                return res.status(502).json({ debug: true, stage: 'upstream-error', status: resp.status, headers: respHeaders, bodySnippet: text.slice(0, 200) });
+            }
             return res.status(502).json({ error: 'Upstream error', status: resp.status, body: text });
         }
 
