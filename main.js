@@ -130,13 +130,31 @@ async function loadChannel(channel) {
 
         hls.on(Hls.Events.ERROR, function (event, data) {
             if (data.fatal) {
+                let msg = `Error fatal HLS: ${data.type} - ${data.details || ''}`;
+                console.error(msg, data);
+                // Mostrar error en pantalla
+                let errDiv = document.getElementById('video-error');
+                if (!errDiv) {
+                    errDiv = document.createElement('div');
+                    errDiv.id = 'video-error';
+                    errDiv.style.position = 'absolute';
+                    errDiv.style.top = '50%';
+                    errDiv.style.left = '50%';
+                    errDiv.style.transform = 'translate(-50%, -50%)';
+                    errDiv.style.background = 'rgba(0,0,0,0.8)';
+                    errDiv.style.color = '#fff';
+                    errDiv.style.padding = '16px 24px';
+                    errDiv.style.borderRadius = '8px';
+                    errDiv.style.zIndex = '100';
+                    errDiv.style.fontSize = '1.1em';
+                    document.querySelector('.video-container').appendChild(errDiv);
+                }
+                errDiv.textContent = msg;
                 switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
-                        console.log("fatal network error encountered, try to recover");
                         hls.startLoad();
                         break;
                     case Hls.ErrorTypes.MEDIA_ERROR:
-                        console.log("fatal media error encountered, try to recover");
                         hls.recoverMediaError();
                         break;
                     default:
@@ -147,6 +165,26 @@ async function loadChannel(channel) {
         });
     } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
         videoEl.src = channel.url;
+        videoEl.addEventListener('error', function (e) {
+            let errDiv = document.getElementById('video-error');
+            if (!errDiv) {
+                errDiv = document.createElement('div');
+                errDiv.id = 'video-error';
+                errDiv.style.position = 'absolute';
+                errDiv.style.top = '50%';
+                errDiv.style.left = '50%';
+                errDiv.style.transform = 'translate(-50%, -50%)';
+                errDiv.style.background = 'rgba(0,0,0,0.8)';
+                errDiv.style.color = '#fff';
+                errDiv.style.padding = '16px 24px';
+                errDiv.style.borderRadius = '8px';
+                errDiv.style.zIndex = '100';
+                errDiv.style.fontSize = '1.1em';
+                document.querySelector('.video-container').appendChild(errDiv);
+            }
+            errDiv.textContent = 'Error de reproducción de video';
+            console.error('Error de reproducción de video', e);
+        });
         videoEl.addEventListener('loadedmetadata', function () {
             videoEl.play().catch(e => console.log("Autoplay blocked:", e));
         });

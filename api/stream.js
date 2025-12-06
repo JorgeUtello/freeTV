@@ -74,6 +74,10 @@ export default async function handler(req, res) {
         const lines = body.split(/\r?\n/);
         const host = req.headers['x-forwarded-host'] || req.headers.host;
         const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+        // Log primeros URIs y headers para depuración
+        const firstSegments = lines.filter(l => l && !l.startsWith('#')).slice(0, 3);
+        console.log('[AMERICA] Primeros segmentos:', firstSegments);
+        console.log('[AMERICA] Headers:', Object.fromEntries(resp.headers.entries()));
         const rewritten = lines.map(line => {
             if (!line || line.startsWith('#')) return line;
             let resolved = line;
