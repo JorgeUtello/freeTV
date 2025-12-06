@@ -96,6 +96,29 @@ app.get('/api/stream/:channel', async (req, res) => {
 });
 
 // Endpoint de health check
+// Endpoint para obtener la lista dinámica de canales desde el playlist
+app.get('/api/channels', async (req, res) => {
+    const playlistUrl = 'http://190.104.67.180:234/playlist.m3u8';
+    try {
+        const resp = await fetch(playlistUrl);
+        const text = await resp.text();
+        const lines = text.split(/\r?\n/);
+        let lastName = null;
+        const channels = [];
+        for (const line of lines) {
+            if (line.startsWith('#EXTINF')) {
+                const match = line.match(/#EXTINF:-1,(.*)/);
+                lastName = match ? match[1].trim() : null;
+            } else if (lastName && line && !line.startsWith('#')) {
+                channels.push({ id: lastName, name: lastName, url: line.trim(), proxy: true });
+                lastName = null;
+            }
+        }
+        res.json({ channels });
+    } catch (err) {
+        res.status(502).json({ error: 'No se pudo obtener la lista de canales', details: err && err.message });
+    }
+});
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });

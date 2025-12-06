@@ -25,25 +25,18 @@ async function loadChannelsFromApi() {
         if (!res.ok) throw new Error('channels API not ok');
         const json = await res.json();
         if (json && Array.isArray(json.channels) && json.channels.length) {
-            channels = json.channels.map(c => {
-                if (c.embed) {
-                    return {
-                        id: c.id,
-                        name: c.name,
-                        embed: true,
-                        iframeUrl: c.iframeUrl
-                    };
-                }
-                return {
-                    id: c.id,
-                    name: c.name,
-                    url: `${API_BASE}/stream?channel=${c.id}`,
-                    isProxy: !!c.proxy
-                };
-            });
+            channels = json.channels.map(c => ({
+                id: c.id,
+                name: c.name,
+                url: `${API_BASE}/stream?channel=${encodeURIComponent(c.id)}`,
+                isProxy: !!c.proxy
+            }));
+        } else {
+            channels = [];
         }
     } catch (e) {
-        console.warn('Could not fetch /api/channels — using fallback list', e);
+        channels = [];
+        console.warn('No se pudo obtener la lista dinámica de canales', e);
     }
 }
 
