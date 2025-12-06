@@ -12,7 +12,9 @@ let channels = [
     // fallback list used if /api/channels is not reachable
     { id: 'america', name: 'America', url: `${API_BASE}/stream?channel=america`, isProxy: true },
     { id: 'telefe', name: 'Telefe', url: `${API_BASE}/stream?channel=telefe`, isProxy: true },
-    { id: 'eltrece', name: 'El Trece', url: `${API_BASE}/stream?channel=eltrece`, isProxy: true }
+    { id: 'eltrece', name: 'El Trece', url: `${API_BASE}/stream?channel=eltrece`, isProxy: true },
+    // local-only fallback for a YouTube embed (iframe)
+    { id: 'youtube_cb12KmMMDJA', name: 'YouTube - Especial', embed: true, iframeUrl: 'https://www.youtube.com/embed/cb12KmMMDJA?si=TNIUnj3XPT9Owxm1' }
 ];
 
 // Try to fetch channels list from serverless API in production
@@ -22,12 +24,22 @@ async function loadChannelsFromApi() {
         if (!res.ok) throw new Error('channels API not ok');
         const json = await res.json();
         if (json && Array.isArray(json.channels) && json.channels.length) {
-            channels = json.channels.map(c => ({
-                id: c.id,
-                name: c.name,
-                url: `${API_BASE}/stream?channel=${c.id}`,
-                isProxy: !!c.proxy
-            }));
+            channels = json.channels.map(c => {
+                if (c.embed) {
+                    return {
+                        id: c.id,
+                        name: c.name,
+                        embed: true,
+                        iframeUrl: c.iframeUrl
+                    };
+                }
+                return {
+                    id: c.id,
+                    name: c.name,
+                    url: `${API_BASE}/stream?channel=${c.id}`,
+                    isProxy: !!c.proxy
+                };
+            });
         }
     } catch (e) {
         console.warn('Could not fetch /api/channels — using fallback list', e);
@@ -62,6 +74,42 @@ function updateActiveChannelUI(channelId) {
 
 async function loadChannel(channel) {
     updateActiveChannelUI(channel.id);
+    // If channel is an embedded iframe (YouTube, etc.), show iframe instead of HLS video
+    const videoEl = document.getElementById('video');
+    const container = document.querySelector('.video-container');
+    let iframe = document.getElementById('embed-iframe');
+
+    if (channel.embed) {
+        // destroy any existing hls instance
+        if (currentHls) {
+            try { currentHls.destroy(); } catch (e) { /* ignore */ }
+            currentHls = null;
+        }
+
+        // hide video element
+        videoEl.style.display = 'none';
+
+        // create iframe if missing
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'embed-iframe';
+            iframe.width = '100%';
+            iframe.height = '100%';
+            iframe.frameBorder = '0';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+            iframe.allowFullscreen = true;
+            container.appendChild(iframe);
+        }
+        iframe.src = channel.iframeUrl || channel.url;
+        iframe.style.display = 'block';
+        return;
+    }
+
+    // Ensure iframe is removed/hidden for regular HLS channels
+    if (iframe) {
+        try { iframe.remove(); } catch (e) { iframe.style.display = 'none'; }
+    }
+    videoEl.style.display = '';
 
     if (Hls.isSupported()) {
         if (currentHls) {
@@ -72,9 +120,9 @@ async function loadChannel(channel) {
         currentHls = hls;
 
         hls.loadSource(channel.url);
-        hls.attachMedia(video);
+        hls.attachMedia(videoEl);
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
-            video.play().catch(e => console.log("Autoplay blocked:", e));
+            videoEl.play().catch(e => console.log("Autoplay blocked:", e));
         });
 
         hls.on(Hls.Events.ERROR, function (event, data) {
@@ -94,10 +142,10 @@ async function loadChannel(channel) {
                 }
             }
         });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = channel.url;
-        video.addEventListener('loadedmetadata', function () {
-            video.play().catch(e => console.log("Autoplay blocked:", e));
+    } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+        videoEl.src = channel.url;
+        videoEl.addEventListener('loadedmetadata', function () {
+            videoEl.play().catch(e => console.log("Autoplay blocked:", e));
         });
     }
 }
