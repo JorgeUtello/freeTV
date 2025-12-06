@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     if (!channel) return res.status(400).json({ error: 'Canal no especificado' });
 
     // Leer y parsear playlist.m3u8 dinámicamente
-    const playlistUrl = 'http://190.104.67.180:234/playlist.m3u8';
+    const playlistUrl = 'https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/ar.m3u';
     let channelMap = {};
     try {
         const resp = await fetch(playlistUrl);
