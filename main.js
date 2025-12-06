@@ -2,24 +2,30 @@ import Hls from 'hls.js';
 import './style.css';
 
 const video = document.getElementById('video');
+
+// En desarrollo usa puerto 3001, en producción usa /api (Vercel)
+const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3001/api' 
+    : '/api';
+
 const channels = [
     {
         id: 'america',
         name: 'America',
-        url: 'https://dai.google.com/linear/hls/pa/event/OY2i_lL4SMyXE5Zaj4ULEg/stream/695e4e3d-258b-4ff9-8cc4-d35943a8f1b8:SCL2/master.m3u8',
+        url: `${API_BASE}/stream?channel=america`,
         isProxy: true
     },
     {
         id: 'telefe',
         name: 'Telefe',
-        url: 'https://telefe.com/Api/Videos/GetSourceUrl/694564/0/HLS?.m3u8https://telefeappmitelefe1.akamaized.net/hls/live/2037985/appmitelefe/TOK/master.m3u8?hdnea=st=1764522332~exp=1764529532~acl=/hls/live/2037985/appmitelefe/TOK/*~hmac=07d0d516c14141932860bb56ed9650965e05737b01dc4443581f581af0f2391a',
+        url: `${API_BASE}/stream?channel=telefe`,
         isProxy: true
     },
     {
         id: 'eltrece',
         name: 'El Trece',
-        url: 'https://livetrx01.vodgc.net/eltrecetv/index.m3u8',
-        isProxy: false
+        url: `${API_BASE}/stream?channel=eltrece`,
+        isProxy: true
     }
 ];
 
