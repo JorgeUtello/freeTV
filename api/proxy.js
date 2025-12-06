@@ -19,6 +19,13 @@ export default async function handler(req, res) {
         maybeForward.forEach(h => {
             if (req.headers[h]) forwardHeaders[h] = req.headers[h];
         });
+        // Refuerza User-Agent y Referer si no están presentes
+        if (!forwardHeaders['user-agent']) {
+            forwardHeaders['user-agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
+        }
+        if (!forwardHeaders['referer']) {
+            forwardHeaders['referer'] = 'https://www.google.com/';
+        }
 
         const resp = await fetch(upstream, { redirect: 'follow', headers: forwardHeaders });
         if (!resp.ok) {
