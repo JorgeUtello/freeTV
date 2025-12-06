@@ -23,8 +23,15 @@ export default async function handler(req, res) {
     if (!source) return res.status(404).json({ error: `Canal '${channel}' no encontrado` });
 
     try {
+        // Forward some client headers that may be required by upstream
+        const forwardHeaders = {};
+        const maybeForward = ['range', 'accept', 'user-agent', 'referer', 'origin', 'accept-encoding'];
+        maybeForward.forEach(h => {
+            if (req.headers[h]) forwardHeaders[h] = req.headers[h];
+        });
+
         // First request without following redirects to capture Location to signed CDN
-        const initial = await fetch(source, { redirect: 'manual', headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const initial = await fetch(source, { redirect: 'manual', headers: { ...forwardHeaders, 'User-Agent': forwardHeaders['user-agent'] || 'Mozilla/5.0' } });
         if (initial.status >= 300 && initial.status < 400) {
             const loc = initial.headers.get('location');
             if (loc) {
@@ -33,14 +40,18 @@ export default async function handler(req, res) {
             }
         }
 
-        // Otherwise follow and obtain playlist
-        const resp = await fetch(source, { redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!resp.ok) throw new Error(`Upstream HTTP ${resp.status}`);
+        // Otherwise follow and obtain playlist (include forwarded headers)
+        const resp = await fetch(source, { redirect: 'follow', headers: { ...forwardHeaders, 'User-Agent': forwardHeaders['user-agent'] || 'Mozilla/5.0' } });
+        if (!resp.ok) {
+            const text = await resp.text().catch(() => '');
+            console.error('[API Error] stream upstream:', resp.status, source, text.slice(0, 300));
+            return res.status(502).json({ error: 'Upstream error', status: resp.status, body: text });
+        }
 
         const body = await resp.text();
         // If it's not a playlist, return as-is
         if (!body.includes('#EXTM3U')) {
-            res.setHeader('Content-Type', 'text/plain');
+            res.setHeader('Content-Type', resp.headers.get('content-type') || 'text/plain');
             return res.send(body);
         }
 
@@ -48,7 +59,7 @@ export default async function handler(req, res) {
         const base = resp.url;
         const lines = body.split(/\r?\n/);
         const host = req.headers['x-forwarded-host'] || req.headers.host;
-        const proto = req.headers['x-forwarded-proto'] || 'https';
+        const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
         const rewritten = lines.map(line => {
             if (!line || line.startsWith('#')) return line;
             let resolved = line;
@@ -60,7 +71,7 @@ export default async function handler(req, res) {
         res.setHeader('Cache-Control', 'public, max-age=10');
         return res.status(200).send(rewritten);
     } catch (err) {
-        console.error('[API Error] stream:', err.message);
-        return res.status(502).json({ error: 'Error obteniendo stream', details: err.message });
+        console.error('[API Error] stream:', err && err.message);
+        return res.status(502).json({ error: 'Error obteniendo stream', details: err && err.message });
     }
 }
