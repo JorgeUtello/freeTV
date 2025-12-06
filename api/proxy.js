@@ -38,6 +38,10 @@ export default async function handler(req, res) {
             const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
             const host = req.headers['x-forwarded-host'] || req.headers.host;
             const lines = body.split(/\r?\n/);
+            // Logging primeros URIs y headers
+            const firstSegments = lines.filter(l => l && !l.startsWith('#')).slice(0, 3);
+            console.log('[PROXY PLAYLIST] Primeros segmentos:', firstSegments);
+            console.log('[PROXY PLAYLIST] Headers:', Object.fromEntries(resp.headers.entries()));
             const rewritten = lines.map(line => {
                 if (!line || line.startsWith('#')) return line;
                 let resolved = line;
@@ -49,7 +53,11 @@ export default async function handler(req, res) {
         }
 
         // For binary segments (e.g. .ts) stream the response directly to client to avoid buffering
-        // Prefer piping if available (node-fetch may expose a node stream)
+        // Logging status y headers de segmentos
+        if (upstream.endsWith('.ts')) {
+            console.log('[PROXY SEGMENTO] Status:', resp.status);
+            console.log('[PROXY SEGMENTO] Headers:', Object.fromEntries(resp.headers.entries()));
+        }
         const upstreamType = resp.headers.get('content-type');
         if (upstreamType) res.setHeader('Content-Type', upstreamType);
         // Forward cache and content-length headers when present
