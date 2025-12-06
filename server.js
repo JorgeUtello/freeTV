@@ -37,15 +37,21 @@ app.get('/api/stream', async (req, res) => {
         // Fetch and rewrite playlist so that all URIs (sub-playlists and segments)
         // point to our proxy endpoint /api/proxy?url=ENCODED_URL
         console.log(`📡 Obteniendo stream de ${channel}...`);
-        const rewritten = await fetchAndRewritePlaylist(url, req);
+        const result = await fetchAndRewritePlaylist(url, req);
+
+        // If helper indicates a redirect, forward it to client so browser can request the signed URL directly
+        if (result && result.redirect) {
+            console.log(`🔀 Redirecting client to ${result.redirect}`);
+            return res.redirect(result.redirect);
+        }
 
         // Headers CORS y de streaming
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
         res.setHeader('Cache-Control', 'public, max-age=10');
 
-        console.log(`✅ Playlist de ${channel} enviado (${rewritten.length} bytes)`);
-        res.send(rewritten);
+        console.log(`✅ Playlist de ${channel} enviado (${result.length} bytes)`);
+        res.send(result);
     } catch (error) {
         console.error(`❌ Error fetching ${channel}:`, error.message);
         res.status(500).json({ error: `No se pudo obtener el stream: ${error.message}` });
@@ -69,15 +75,20 @@ app.get('/api/stream/:channel', async (req, res) => {
         // Fetch and rewrite playlist so that all URIs (sub-playlists and segments)
         // point to our proxy endpoint /api/proxy?url=ENCODED_URL
         console.log(`📡 Obteniendo stream de ${channel}...`);
-        const rewritten = await fetchAndRewritePlaylist(url, req);
+        const result = await fetchAndRewritePlaylist(url, req);
+
+        if (result && result.redirect) {
+            console.log(`🔀 Redirecting client to ${result.redirect}`);
+            return res.redirect(result.redirect);
+        }
 
         // Headers CORS y de streaming
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
         res.setHeader('Cache-Control', 'public, max-age=10');
 
-        console.log(`✅ Playlist de ${channel} enviado (${rewritten.length} bytes)`);
-        res.send(rewritten);
+        console.log(`✅ Playlist de ${channel} enviado (${result.length} bytes)`);
+        res.send(result);
     } catch (error) {
         console.error(`❌ Error fetching ${channel}:`, error.message);
         res.status(500).json({ error: `No se pudo obtener el stream: ${error.message}` });
@@ -96,16 +107,30 @@ async function fetchAndRewritePlaylist(sourceUrl, req) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     };
 
-    const resp = await fetch(sourceUrl, { headers, redirect: 'follow' });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} from upstream`);
+    // First try without following redirects: some endpoints return a 302 to a
+    // signed CDN URL. In that case return a redirect to the client so the
+    // browser can request the signed URL directly (avoids server being blocked).
+    const resp = await fetch(sourceUrl, { headers, redirect: 'manual' });
+    if (resp.status >= 300 && resp.status < 400) {
+        const location = resp.headers.get('location');
+        if (location) {
+            // Resolve relative Location
+            const resolved = new URL(location, sourceUrl).toString();
+            return { redirect: resolved };
+        }
+    }
 
-    const text = await resp.text();
+    // Otherwise follow fully and get the playlist text
+    const resp2 = await fetch(sourceUrl, { headers, redirect: 'follow' });
+    if (!resp2.ok) throw new Error(`HTTP ${resp2.status} from upstream`);
+
+    const text = await resp2.text();
     if (!text || !text.includes('#EXTM3U')) {
         // not a playlist, return raw
         return text;
     }
 
-    const base = resp.url;
+    const base = resp2 ? resp2.url : resp.url;
     const lines = text.split(/\r?\n/);
     const rewritten = lines.map(line => {
         if (!line || line.startsWith('#')) return line;
