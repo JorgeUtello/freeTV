@@ -52,11 +52,13 @@ function renderChannels() {
     const list = document.getElementById('channel-list');
     list.innerHTML = '';
 
-    channels.forEach(channel => {
+    channels.forEach((channel, idx) => {
         const li = document.createElement('li');
         li.className = 'channel-item';
         li.textContent = channel.name;
         li.onclick = () => loadChannel(channel);
+        li.tabIndex = -1;
+        li.onfocus = () => { focusedIndex = idx; };
         if (channel.id === 'telefe') li.classList.add('active'); // Default active
         list.appendChild(li);
     });
@@ -151,8 +153,58 @@ async function loadChannel(channel) {
 }
 
 // Initialize: try to load from API, then render and load first channel
+
+// --- TV/remote-friendly menu logic ---
+let menuTimeout = null;
+let focusedIndex = 0;
+
+function showMenu() {
+    document.body.classList.add('menu-visible');
+    clearTimeout(menuTimeout);
+    menuTimeout = setTimeout(() => {
+        document.body.classList.remove('menu-visible');
+    }, 4000);
+}
+
+function focusChannel(idx) {
+    const items = document.querySelectorAll('.channel-item');
+    if (!items.length) return;
+    items.forEach(i => i.tabIndex = -1);
+    if (idx < 0) idx = 0;
+    if (idx >= items.length) idx = items.length - 1;
+    focusedIndex = idx;
+    items[idx].focus();
+    showMenu();
+}
+
+function handleKey(e) {
+    const items = document.querySelectorAll('.channel-item');
+    if (!items.length) return;
+    if (['ArrowDown', 'ArrowRight'].includes(e.key)) {
+        focusChannel((focusedIndex + 1) % items.length);
+        e.preventDefault();
+    } else if (['ArrowUp', 'ArrowLeft'].includes(e.key)) {
+        focusChannel((focusedIndex - 1 + items.length) % items.length);
+        e.preventDefault();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+        items[focusedIndex].click();
+        e.preventDefault();
+    } else if (e.key === 'm') {
+        showMenu();
+    }
+}
+
+document.addEventListener('keydown', handleKey);
+document.addEventListener('mousemove', showMenu);
+document.addEventListener('touchstart', showMenu);
+
+// Always show menu on load
+document.body.classList.add('menu-visible');
+
 (async () => {
     await loadChannelsFromApi();
     renderChannels();
     if (channels && channels.length) loadChannel(channels[0]);
+    // Focus first channel for remote/keyboard
+    setTimeout(() => focusChannel(0), 100);
 })();
