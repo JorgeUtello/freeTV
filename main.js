@@ -8,26 +8,31 @@ const API_BASE = window.location.hostname === 'localhost'
     ? 'http://localhost:3001/api' 
     : '/api';
 
-const channels = [
-    {
-        id: 'america',
-        name: 'America',
-        url: `${API_BASE}/stream?channel=america`,
-        isProxy: true
-    },
-    {
-        id: 'telefe',
-        name: 'Telefe',
-        url: `${API_BASE}/stream?channel=telefe`,
-        isProxy: true
-    },
-    {
-        id: 'eltrece',
-        name: 'El Trece',
-        url: `${API_BASE}/stream?channel=eltrece`,
-        isProxy: true
-    }
+let channels = [
+    // fallback list used if /api/channels is not reachable
+    { id: 'america', name: 'America', url: `${API_BASE}/stream?channel=america`, isProxy: true },
+    { id: 'telefe', name: 'Telefe', url: `${API_BASE}/stream?channel=telefe`, isProxy: true },
+    { id: 'eltrece', name: 'El Trece', url: `${API_BASE}/stream?channel=eltrece`, isProxy: true }
 ];
+
+// Try to fetch channels list from serverless API in production
+async function loadChannelsFromApi() {
+    try {
+        const res = await fetch(`${API_BASE}/channels`);
+        if (!res.ok) throw new Error('channels API not ok');
+        const json = await res.json();
+        if (json && Array.isArray(json.channels) && json.channels.length) {
+            channels = json.channels.map(c => ({
+                id: c.id,
+                name: c.name,
+                url: `${API_BASE}/stream?channel=${c.id}`,
+                isProxy: !!c.proxy
+            }));
+        }
+    } catch (e) {
+        console.warn('Could not fetch /api/channels — using fallback list', e);
+    }
+}
 
 let currentHls = null;
 
@@ -97,6 +102,9 @@ async function loadChannel(channel) {
     }
 }
 
-// Initialize with first channel
-renderChannels();
-loadChannel(channels[0]);
+// Initialize: try to load from API, then render and load first channel
+(async () => {
+    await loadChannelsFromApi();
+    renderChannels();
+    if (channels && channels.length) loadChannel(channels[0]);
+})();
