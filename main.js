@@ -77,6 +77,9 @@ function updateActiveChannelUI(channelId) {
 
 async function loadChannel(channel) {
     updateActiveChannelUI(channel.id);
+    // Limpiar error visual si existe
+    const oldErr = document.getElementById('video-error');
+    if (oldErr) oldErr.remove();
     // If channel is an embedded iframe (YouTube, etc.), show iframe instead of HLS video
     const videoEl = document.getElementById('video');
     const container = document.querySelector('.video-container');
@@ -124,8 +127,14 @@ async function loadChannel(channel) {
 
         hls.loadSource(channel.url);
         hls.attachMedia(videoEl);
+        let playRequested = false;
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
-            videoEl.play().catch(e => console.log("Autoplay blocked:", e));
+            if (!playRequested) {
+                playRequested = true;
+                videoEl.play().catch(e => {
+                    if (e.name !== 'AbortError') console.log("Autoplay blocked:", e);
+                });
+            }
         });
 
         hls.on(Hls.Events.ERROR, function (event, data) {
@@ -185,8 +194,14 @@ async function loadChannel(channel) {
             errDiv.textContent = 'Error de reproducción de video';
             console.error('Error de reproducción de video', e);
         });
+        let playRequested = false;
         videoEl.addEventListener('loadedmetadata', function () {
-            videoEl.play().catch(e => console.log("Autoplay blocked:", e));
+            if (!playRequested) {
+                playRequested = true;
+                videoEl.play().catch(e => {
+                    if (e.name !== 'AbortError') console.log("Autoplay blocked:", e);
+                });
+            }
         });
     }
 }

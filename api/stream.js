@@ -51,16 +51,23 @@ export default async function handler(req, res) {
 
         // Otherwise follow and obtain playlist (include forwarded headers)
         const resp = await fetch(source, { redirect: 'follow', headers: { ...forwardHeaders, 'User-Agent': forwardHeaders['user-agent'] || 'Mozilla/5.0' } });
+        const text = await resp.text().catch(() => '');
+        if (debug) {
+            const respHeaders = {};
+            resp.headers.forEach((v, k) => respHeaders[k] = v);
+            return res.status(resp.ok ? 200 : 502).json({
+                debug: true,
+                stage: resp.ok ? 'playlist' : 'upstream-error',
+                status: resp.status,
+                headers: respHeaders,
+                bodySnippet: text.slice(0, 500)
+            });
+        }
         if (!resp.ok) {
-            const text = await resp.text().catch(() => '');
             console.error('[API Error] stream upstream:', resp.status, source, text.slice(0, 300));
-            if (debug) {
-                const respHeaders = {};
-                resp.headers.forEach((v, k) => respHeaders[k] = v);
-                return res.status(502).json({ debug: true, stage: 'upstream-error', status: resp.status, headers: respHeaders, bodySnippet: text.slice(0, 200) });
-            }
             return res.status(502).json({ error: 'Upstream error', status: resp.status, body: text });
         }
+        // ...existing code...
 
         const body = await resp.text();
         // If it's not a playlist, return as-is
