@@ -17,16 +17,16 @@ export function parseM3U(content) {
       const info = line.substring(8);
       const parts = info.split(',');
       const name = parts[parts.length - 1].trim();
-      
+
       // Extract attributes
       const logoMatch = info.match(/tvg-logo="([^"]*)"/);
       const groupMatch = info.match(/group-title="([^"]*)"/);
-      
+
       currentChannel = {
         id: crypto.randomUUID(),
         name: name || 'Unknown Channel',
         logo: logoMatch ? logoMatch[1] : null,
-        group: groupMatch ? groupMatch[1] : 'Uncategorized',
+        group: groupMatch ? groupMatch[1] : '',
       };
     } else if (line.startsWith('http')) {
       if (currentChannel) {

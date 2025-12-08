@@ -31,7 +31,7 @@ export function ChannelList({ channels, onSelectChannel, selectedChannelId }) {
                     </div>
                     <div className="channel-info">
                         <span className="channel-name">{channel.name}</span>
-                        <span className="channel-group">{channel.group}</span>
+                        {channel.group && <span className="channel-group">{channel.group}</span>}
                     </div>
                 </button>
             </div>

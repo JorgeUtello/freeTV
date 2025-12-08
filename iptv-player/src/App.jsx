@@ -58,7 +58,6 @@ function App() {
             <VideoPlayer src={selectedChannel.url} />
             <div className="channel-details glass">
               <h1>{selectedChannel.name}</h1>
-              <span className="badge">{selectedChannel.group}</span>
             </div>
           </div>
         ) : (
