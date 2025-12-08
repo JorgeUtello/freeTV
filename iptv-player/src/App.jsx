@@ -5,7 +5,7 @@ import { ChannelList } from './components/ChannelList';
 import { Menu, X, Loader2 } from 'lucide-react';
 
 // URL provided by the user
-const PLAYLIST_URL = 'https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/ar.m3u';
+const PLAYLIST_URL = 'https://raw.githubusercontent.com/iptv-org/iptv/master/streams/ar.m3u';
 
 function App() {
   const { channels, loading, error } = usePlaylist(PLAYLIST_URL);
