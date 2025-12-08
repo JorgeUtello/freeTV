@@ -5,7 +5,7 @@ import { ChannelList } from './components/ChannelList';
 import { Menu, X, Loader2 } from 'lucide-react';
 
 // URL provided by the user
-const PLAYLIST_URL = './playlist.m3u';
+const PLAYLIST_URL = '/playlist.m3u';
 
 function App() {
   const { channels, loading, error } = usePlaylist(PLAYLIST_URL);
