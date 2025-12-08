@@ -1,0 +1,13 @@
+{
+  "name": "freeTV-proxy",
+  "version": "1.0.0",
+  "description": "Simple proxy to fetch HLS segments from prepublish.f.qaotic.net",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^3.4.2"
+  }
+}
