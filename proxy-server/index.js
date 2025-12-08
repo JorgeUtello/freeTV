@@ -1,5 +1,5 @@
 const express = require('express');
-const fetch = (...args) => import('node-fetch').then(m => m.default(...args));
+const fetch = require('node-fetch');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
