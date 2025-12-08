@@ -22,11 +22,17 @@ export function parseM3U(content) {
       const logoMatch = info.match(/tvg-logo="([^"]*)"/);
       const groupMatch = info.match(/group-title="([^"]*)"/);
 
+      // Extract VLCOPT options
+      const userAgentMatch = info.match(/http-user-agent=([^"]*)/) || line.match(/http-user-agent=([^,]*)/);
+      const referrerMatch = info.match(/http-referrer=([^"]*)/) || line.match(/http-referrer=([^,]*)/);
+
       currentChannel = {
         id: crypto.randomUUID(),
         name: name || 'Unknown Channel',
         logo: logoMatch ? logoMatch[1] : null,
         group: groupMatch ? groupMatch[1] : '',
+        userAgent: userAgentMatch ? userAgentMatch[1] : null,
+        referrer: referrerMatch ? referrerMatch[1] : null,
       };
     } else if (line.startsWith('http')) {
       if (currentChannel) {

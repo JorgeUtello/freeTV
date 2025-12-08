@@ -4,7 +4,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 
 const CORS_PROXY = 'https://corsproxy.io/?';
 
-export function VideoPlayer({ src, poster }) {
+export function VideoPlayer({ src, poster, userAgent, referrer }) {
     const videoRef = useRef(null);
     const [error, setError] = useState(null);
     const [usingProxy, setUsingProxy] = useState(false);

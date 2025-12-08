@@ -55,7 +55,11 @@ function App() {
       <main className="main-content">
         {selectedChannel ? (
           <div className="player-wrapper">
-            <VideoPlayer src={selectedChannel.url} />
+            <VideoPlayer
+              src={selectedChannel.url}
+              userAgent={selectedChannel.userAgent}
+              referrer={selectedChannel.referrer}
+            />
             <div className="channel-details glass">
               <h1>{selectedChannel.name}</h1>
             </div>
