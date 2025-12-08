@@ -122,6 +122,12 @@ body {
   font-size: 0.9rem;
 }
 
+.channel-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .channel-list {
   flex: 1;
   overflow-y: auto;
